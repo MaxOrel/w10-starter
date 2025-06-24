@@ -9,10 +9,8 @@ export interface GridCSS extends CSSProperties {
 
 type CellCallbackProps = {};
 
-type GridProps = {
-  children: (params: CellCallbackProps) => ReactNode;
-};
+type GridProps = {};
 
-export const Grid = ({ children }: GridProps) => {
-  return children();
+export const Grid = ({}: GridProps) => {
+  return null;
 };

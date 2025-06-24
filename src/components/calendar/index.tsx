@@ -17,9 +17,28 @@ interface CalendarProps {
 }
 
 export function Calendar({ children }: CalendarProps) {
-  const { calendar, prevMonth, nextMonth } = useCalendar()
+  const instance = useRef<MonthCalendar>(new MonthCalendar());
+
+  const rebuildCalendar = () => {
+    const builder = new CalendarBuilder(instance.current);
+    return builder.getMonthTable();
+  };
+
+  const [calendar, setCurrent] = useState<CalendarMonthTable>(rebuildCalendar);
+
+  const nextMonth = () => {
+    instance.current.next();
+    setCurrent(rebuildCalendar());
+  };
+
+  const prevMonth = () => {
+    instance.current.prev();
+    setCurrent(rebuildCalendar());
+  };
 
   const isHeader = (x: number, y: number) => x === 0 || y === 0;
+
+  const cells: string[] = fillArray(calendar.width * calendar.height, "");
 
   return (
     <section className="calendar">
@@ -32,18 +51,40 @@ export function Calendar({ children }: CalendarProps) {
           »
         </Button>
       </nav>
-      <Grid width={calendar.width} height={calendar.height}>
-        {({ x, y, index }) => <Cell key={pointToString(x, y)} x={x} y={y} extraClass={clsx("day",
-          calendar.table[index].className,
-          {
-            header: isHeader(x, y),
-          })}>
-          {children && !isHeader(x, y)
-            ? children(calendar.table[index])
-            : calendar.table[index].value}
-        </Cell>
-        }
-      </Grid>
-    </section >
+      <div className="layers">
+        <form
+          className={clsx("layer", "base")}
+          style={
+            {
+              "--w": calendar.width,
+              "--h": calendar.height,
+            } as GridCSS
+          }
+        >
+          {cells.map((_, index) => {
+            const [x, y] = axis2D(index, calendar.width);
+            return (
+              <button
+                key={pointToString(x, y)}
+                className={clsx(
+                  "cell",
+                  "day",
+                  calendar.table[index].className,
+                  {
+                    header: isHeader(x, y),
+                  }
+                )}
+                data-x={x}
+                data-y={y}
+              >
+                {children && !isHeader(x, y)
+                  ? children(calendar.table[index])
+                  : calendar.table[index].value}
+              </button>
+            );
+          })}
+        </form>
+      </div>
+    </section>
   );
 }
